@@ -1,11 +1,11 @@
 [package]
 name = "flinn_engdahl"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Brian Savage <savage13@gmail.com>"]
 edition = "2018"
-repository = "https://github.com/savge13/flinnengdahl"
-documentation = "https://docs.rs/flinnengdahl"
-homepage = "https://github.com/savage13/flinnengdahl"
+repository = "https://github.com/savge13/flinn_engdahl"
+documentation = "https://docs.rs/flinn_engdahl"
+homepage = "https://github.com/savage13/flinn_engdahl"
 license = "BSD-2-Clause"
 description = "Flinn-Engdahl Seismic And Geographic Regionalization - Rust Implementation"
 
