@@ -1,19 +1,40 @@
 
-//! https://earthquake.usgs.gov/learn/topics/flinn_engdahl.php
+//! Implementation of the Flinn-Engdahl seismic and geographical regionalization scheme.
+//!
+//! ```rust
+//! use flinnengdahl as fe;
+//! let name = fe::region(-42.448299, 171.214005).unwrap();
+//! assert_eq!(name, "SOUTH ISLAND, NEW ZEALAND");
+//! ```
+//!
+//! # References
+//!
+//!    - [Young, J.B., Presgrave, B.W., Aichele, H., Wiens, D.A. and Flinn, E.A., 1996, The Flinn-Engdahl Regionalisation Scheme: the 1995 revision, Physics of the Earth and Planetary Interiors, v. 96, p. 223-297.](https://www.sciencedirect.com/science/article/pii/003192019603141X)
+//!    - [Flinn, E.A., Engdahl, E.R. and Hill, A.R., 1974, Seismic and geographical regionalization, Bulletin of the Seismological Society of America, vol. 64, p. 771-993.](https://pubs.geoscienceworld.org/ssa/bssa/article/64/3-2/771/117264/seismic-and-geographical-regionalization)
+//!    - [Flinn, E.A., and Engdahl, E.R., 1965, A proposed basis for geographical and seismic regionalization, Reviews of Geophysics, vol. 3, p. 123-149.](https://doi.org/10.1029/RG003i001p00123)
+//!
+//! # Further Information
+//! [https://en.wikipedia.org/wiki/Flinn%E2%80%93Engdahl_regions](https://en.wikipedia.org/wiki/Flinn%E2%80%93Engdahl_regions)
+//!
+//! [https://earthquake.usgs.gov/learn/topics/flinn_engdahl.php](https://earthquake.usgs.gov/learn/topics/flinn_engdahl.php)
+//!
+//! [ftp://hazards.cr.usgs.gov/feregion/fe_1995/](ftp://hazards.cr.usgs.gov/feregion/fe_1995/)
 //! 
-//! ftp://hazards.cr.usgs.gov/feregion/fe_1995/
 
-#[derive(Debug)]
+/// Errors for Flinn-Engdahl
+#[derive(Debug,Copy,Clone,PartialEq)]
 pub enum RegionError {
+    /// Longitude is out of allowable range
     BadLongitude,
+    /// Latitude is out of allowable range
     BadLatitude,
 }
 
 /// Convert lat,lon position in region number
 ///
 /// # Arguments
-///  - lat - Latitude
-///  - lon - Longitude
+///  - lat - Latitude [-90, 90]
+///  - lon - Longitude [-360, 360]
 ///  - quadid - Quadrant Index ([274, 183, 92, 1])
 ///  - llindx - (Tier onset index, length of segments in tier)
 ///  - lattiers - (Longitude (truncated), Region Number)
@@ -22,11 +43,18 @@ fn namnum(lat: f64, lon: f64,
           quadid: &[usize],
           llindx: &[(usize,usize)],
           lattiers: &[(usize,usize)]) -> Result<usize,RegionError> {
-    if lon.abs() > 180.0 {
-        return Err(RegionError::BadLongitude);
-    }
     if lat.abs() > 90.0 {
         return Err(RegionError::BadLatitude);
+    }
+    if lon.abs() > 360.0 {
+        return Err(RegionError::BadLongitude);
+    }
+
+    let mut lon = lon;
+    if lon < -180.0 {
+        lon = lon + 360.0;
+    } else if lon > 180.0 {
+        lon = lon - 360.0;
     }
 
     // Find the Hemisphere of the input position
@@ -58,10 +86,42 @@ fn namnum(lat: f64, lon: f64,
     Ok(pair.1)
 }
 
+/// Get the FlinnEngdahl region name from a location at (`lat`,`lon`)
+///
+/// ```rust
+///  let region = flinnengdahl::region(41.440971, -71.502289).unwrap();
+///  assert_eq!(region, "SOUTHERN NEW ENGLAND");
+/// ```
+///
+/// # Arguments
+///   - lat - Latitude  [-90, 90]
+///   - lon - Longitude [-360, 360]
+///
+///   Note: Values returned at longitude of -180 and 180 are different
+///
+/// # Returns
+///   - Flinn-Engdahl Region Name
+///
+///
 pub fn region(lat: f64, lon: f64) -> Result<&'static str, RegionError> {
     let n = crate::namnum(lat, lon, &crate::quadids(), &LLINDX, &LAT_TIERS)?;
     Ok(NAMES[n-1])
 }
+/// Get the Flinn-Engdahl region numner from a location at (`lat`,`lon`)
+///
+/// ```rust
+///  let region = flinnengdahl::region(37.871593, -122.272743).unwrap();
+///  assert_eq!(region, "CENTRAL CALIFORNIA");
+/// ```
+///
+/// # Arguments
+///   - lat - Latitude
+///   - lon - Longitude
+///
+/// # Returns
+///   - Flinn-Engdahl Region Number
+///
+///
 pub fn region_number(lat: f64, lon: f64) -> Result<usize, RegionError> {
     crate::namnum(lat, lon, &crate::quadids(), &LLINDX, &LAT_TIERS)
 }
@@ -161,13 +221,16 @@ fn names_write<P: AsRef<std::path::Path>>(names: &[String], file: P) {
     std::fs::write(file, out).unwrap();
 }
 
-pub fn reformat_names<P: AsRef<std::path::Path>>(file: P) {
+#[allow(dead_code)]
+fn reformat_names<P: AsRef<std::path::Path>>(file: P) {
     names_write( &names_read(), file );
 }
-pub fn reformat_latitude_tiers<P: AsRef<std::path::Path>>(file: P) {
+#[allow(dead_code)]
+fn reformat_latitude_tiers<P: AsRef<std::path::Path>>(file: P) {
     latitude_tiers_write( &latitude_tiers_read(), file );
 }
-pub fn reformat_lat_lon_index<P: AsRef<std::path::Path>>(file: P) {
+#[allow(dead_code)]
+fn reformat_lat_lon_index<P: AsRef<std::path::Path>>(file: P) {
     lat_lon_index_write( &llindx(), file );
 }
 
@@ -241,5 +304,25 @@ mod tests {
             assert_eq!(name, place, "{} {} {}", line, place, n);
             assert_eq!(rid, n, "{} {} {}", line, place, n);
         }
+    }
+    #[test]
+    fn lat_test() {
+        assert_eq!(crate::region_number(0., 0.), Ok(561));
+        assert_eq!(crate::region_number(-91., 0.), Err(crate::RegionError::BadLatitude));
+        assert_eq!(crate::region_number(91., 0.), Err(crate::RegionError::BadLatitude));
+        assert_eq!(crate::region_number(90., 0.), Ok(633));
+        assert_eq!(crate::region_number(-90., 0.), Ok(729));
+    }
+    #[test]
+    fn lon_test() {
+        assert_eq!(crate::region_number(0., 361.), Err(crate::RegionError::BadLongitude));
+        assert_eq!(crate::region_number(0., -361.), Err(crate::RegionError::BadLongitude));
+        assert_eq!(crate::region_number(0., 360.), Ok(561));
+        assert_eq!(crate::region_number(0., -360.), Ok(561));
+        assert_eq!(crate::region_number(0., 0.), crate::region_number(0.0,  360.0));
+        assert_eq!(crate::region_number(0., 0.), crate::region_number(0.0, -360.0));
+        assert_eq!(crate::region_number(0., 179.9), crate::region_number(0.0, -180.1));
+        assert_eq!(crate::region_number(0., 180.1), crate::region_number(0.0, -179.9));
+        assert_ne!(crate::region_number(0., 180.0), crate::region_number(0.0, -180.0));
     }
 }
