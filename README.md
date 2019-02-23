@@ -13,7 +13,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-flinn_engdahl = "0.1.0"
+flinn_engdahl = "0.1.1"
 ```
 
 ## Example
