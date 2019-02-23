@@ -26,7 +26,7 @@ assert_eq!(name, "VICTORIA LAND, ANTARCTICA");
 
 ## License
 
-This version was ported from agg-2.4 (BSD 3-Clause) and is released
-under the BSD 2-Clause License.
+The BSD 2-Clause License. The original regionalization contained no license 
+and was published in peer-reviewed journals.
 
 
