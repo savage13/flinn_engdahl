@@ -1,8 +1,11 @@
 
 //! Implementation of the Flinn-Engdahl seismic and geographical regionalization scheme.
 //!
+//! Converts a location (latitude, longitude) into a named region of the world
+//!
+//!
 //! ```rust
-//! use flinnengdahl as fe;
+//! use flinn_engdahl as fe;
 //! let name = fe::region(-42.448299, 171.214005).unwrap();
 //! assert_eq!(name, "SOUTH ISLAND, NEW ZEALAND");
 //! ```
@@ -21,7 +24,7 @@
 //! [ftp://hazards.cr.usgs.gov/feregion/fe_1995/](ftp://hazards.cr.usgs.gov/feregion/fe_1995/)
 //! 
 
-/// Errors for Flinn-Engdahl
+/// Errors for Flinn_Engdahl
 #[derive(Debug,Copy,Clone,PartialEq)]
 pub enum RegionError {
     /// Longitude is out of allowable range
@@ -86,10 +89,11 @@ fn namnum(lat: f64, lon: f64,
     Ok(pair.1)
 }
 
-/// Get the FlinnEngdahl region name from a location at (`lat`,`lon`)
+/// Get the Flinn_Engdahl region name from a location at (`lat`,`lon`)
 ///
 /// ```rust
-///  let region = flinnengdahl::region(41.440971, -71.502289).unwrap();
+///  use flinn_engdahl as fe;
+///  let region = fe::region(41.440971, -71.502289).unwrap();
 ///  assert_eq!(region, "SOUTHERN NEW ENGLAND");
 /// ```
 ///
@@ -100,17 +104,18 @@ fn namnum(lat: f64, lon: f64,
 ///   Note: Values returned at longitude of -180 and 180 are different
 ///
 /// # Returns
-///   - Flinn-Engdahl Region Name
+///   - Flinn_Engdahl Region Name
 ///
 ///
 pub fn region(lat: f64, lon: f64) -> Result<&'static str, RegionError> {
     let n = crate::namnum(lat, lon, &crate::quadids(), &LLINDX, &LAT_TIERS)?;
     Ok(NAMES[n-1])
 }
-/// Get the Flinn-Engdahl region numner from a location at (`lat`,`lon`)
+/// Get the Flinn_Engdahl region numner from a location at (`lat`,`lon`)
 ///
 /// ```rust
-///  let region = flinnengdahl::region(37.871593, -122.272743).unwrap();
+///  use flinn_engdahl as fe;
+///  let region = fe::region(37.871593, -122.272743).unwrap();
 ///  assert_eq!(region, "CENTRAL CALIFORNIA");
 /// ```
 ///
@@ -119,7 +124,7 @@ pub fn region(lat: f64, lon: f64) -> Result<&'static str, RegionError> {
 ///   - lon - Longitude
 ///
 /// # Returns
-///   - Flinn-Engdahl Region Number
+///   - Flinn_Engdahl Region Number
 ///
 ///
 pub fn region_number(lat: f64, lon: f64) -> Result<usize, RegionError> {
@@ -264,6 +269,10 @@ mod tests {
         assert_eq!(name, place, "{} {}", place, n);
         assert_eq!(rid, n, "{} {}", place, n);
 
+        let name = crate::region(-77.845753, 166.675927).unwrap();
+        assert_eq!(name, "VICTORIA LAND, ANTARCTICA");
+
+        
     }
 
     #[test]

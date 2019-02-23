@@ -3,5 +3,10 @@ name = "flinnengdahl"
 version = "0.1.0"
 authors = ["Brian Savage <savage@uri.edu>"]
 edition = "2018"
+repository = "https://github.com/savge13/flinnengdahl"
+documentation = "https://docs.rs/flinnengdahl"
+homepage = "https://github.com/savage13/flinnengdahl"
+license = "BSD-2-Clause"
+description = "Flinn-Engdahl Seismic And Geographic Regionalization - Rust Implementation"
 
 [dependencies]
